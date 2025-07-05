@@ -3,6 +3,7 @@ import urllib.parse
 from sqlalchemy import create_engine
 from app.utils.config_utils import DatabaseConfig
 from sqlalchemy.orm import sessionmaker
+from app.utils.logger import logger
 
 class ConnectionStringBuilder:
     @staticmethod
@@ -43,3 +44,5 @@ class SQLClient:
 
     def get_session(self):
         return self.__session()
+
+sql_client = SQLClient()
