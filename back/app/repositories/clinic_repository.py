@@ -17,6 +17,28 @@ class ClinicRepository(AbtractRepository):
                 f'Failed Operation to get all clinic name'
             )
             raise
+
+    def list_paginated(self, offset: int, limit: int):
+        """Get paginated list of clinics"""
+        logger.info(f"Start getting paginated clinics: offset={offset}, limit={limit}")
+        try:
+            clinics = self.__session.query(Clinic).offset(offset).limit(limit).all()
+            logger.info(f"Successful operation to get paginated clinics: {len(clinics)} items")
+            return clinics
+        except Exception as e:
+            logger.error(f'Failed Operation to get paginated clinics: {e}')
+            raise
+
+    def count(self) -> int:
+        """Get total count of clinics"""
+        logger.info("Start counting clinics")
+        try:
+            count = self.__session.query(Clinic).count()
+            logger.info(f"Successful count operation: {count} clinics")
+            return count
+        except Exception as e:
+            logger.error(f'Failed Operation to count clinics: {e}')
+            raise
     
     def get(self, clinic_id):
         logger.info("Starting to get a clinic from  data base")
@@ -33,12 +55,11 @@ class ClinicRepository(AbtractRepository):
         logger.info("Starting to add a clinic to database")
         try:
             self.__session.add(clinic)
-            self.__session.commit()
+            self.__session.flush()  # Flush to get the ID
             self.__session.refresh(clinic)
             logger.info(f"Successfully added clinic: {clinic.name}")
             return clinic
         except Exception as e:
-            self.__session.rollback()
             logger.error(f"Failed to add clinic: {e}")
             raise
 
@@ -53,12 +74,11 @@ class ClinicRepository(AbtractRepository):
             for key, value in clinic_data.items():
                 setattr(clinic, key, value)
             
-            self.__session.commit()
+            self.__session.flush()
             self.__session.refresh(clinic)
             logger.info(f"Successfully updated clinic: {clinic.name}")
             return clinic
         except Exception as e:
-            self.__session.rollback()
             logger.error(f"Failed to update clinic: {e}")
             raise
 
@@ -71,10 +91,9 @@ class ClinicRepository(AbtractRepository):
                 return False
             
             self.__session.delete(clinic)
-            self.__session.commit()
+            self.__session.flush()
             logger.info(f"Successfully deleted clinic: {clinic.name}")
             return True
         except Exception as e:
-            self.__session.rollback()
             logger.error(f"Failed to delete clinic: {e}")
             raise

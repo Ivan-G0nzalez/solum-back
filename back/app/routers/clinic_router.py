@@ -3,6 +3,7 @@ from typing import List
 from app.services.clinic_services import ClinicService
 from app.domain.models import Clinic, ClinicCreate, ClinicUpdate
 from app.utils.logger import logger
+from app.utils.pagination import get_pagination_params, PaginationResponse
 
 # Create router with prefix and tags
 router = APIRouter(
@@ -15,12 +16,37 @@ router = APIRouter(
 def get_clinic_service() -> ClinicService:
     return ClinicService()
 
-@router.get("/", response_model=List[Clinic], summary="Get all clinics")
+@router.get("/", response_model=PaginationResponse[Clinic], summary="Get all clinics (paginated)")
 async def get_clinics(
+    pagination = Depends(get_pagination_params),
     service: ClinicService = Depends(get_clinic_service)
 ):
     """
-    Retrieve all clinics from the database.
+    Retrieve all clinics from the database with pagination.
+    
+    Query Parameters:
+        page (int): Page number (default: 1)
+        items_per_page (int): Items per page (default: 10, max: 100)
+    
+    Returns:
+        PaginationResponse[Clinic]: Paginated list of clinics
+    """
+    try:
+        clinics = service.get_clinics_paginated(pagination)
+        return clinics
+    except Exception as e:
+        logger.error(f"Error in get_clinics endpoint: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error"
+        )
+
+@router.get("/all", response_model=List[Clinic], summary="Get all clinics (no pagination)")
+async def get_all_clinics(
+    service: ClinicService = Depends(get_clinic_service)
+):
+    """
+    Retrieve all clinics from the database without pagination.
     
     Returns:
         List[Clinic]: List of all clinics
@@ -29,7 +55,7 @@ async def get_clinics(
         clinics = service.get_clinics()
         return clinics
     except Exception as e:
-        logger.error(f"Error in get_clinics endpoint: {e}")
+        logger.error(f"Error in get_all_clinics endpoint: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"

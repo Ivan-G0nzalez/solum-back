@@ -2,6 +2,7 @@ from app.repositories.unit_of_work import UnitOfWork
 from app.data_acess.models import Clinic as ClinicModel
 from app.domain.models import Clinic as ClinicDomain, ClinicCreate, ClinicUpdate
 from app.utils.logger import logger
+from app.utils.pagination import CustomPagination
 
 
 class ClinicService:
@@ -19,6 +20,32 @@ class ClinicService:
             return clinics
         except Exception as e:
             logger.error(f"Error retrieving clinics: {e}")
+            raise
+
+    def get_clinics_paginated(self, pagination: CustomPagination):
+        """Get paginated clinics"""
+        logger.info(f"Processing request for paginated clinics: page={pagination.page}, items_per_page={pagination.items_per_page}")
+
+        try:
+            # Get total count
+            total_count = self.__unit_of_work.clinics.count()
+            
+            # Get paginated data
+            clinic_models = self.__unit_of_work.clinics.list_paginated(
+                offset=pagination.offset, 
+                limit=pagination.items_per_page
+            )
+            
+            # Convert to domain models
+            clinics = [ClinicDomain.model_validate(clinic) for clinic in clinic_models]
+            
+            # Create paginated response
+            paginated_response = pagination.paginate(clinics, total_count)
+            
+            logger.info(f"Successfully retrieved {len(clinics)} clinics (page {pagination.page} of {paginated_response.payload['pagination']['last_page']})")
+            return paginated_response
+        except Exception as e:
+            logger.error(f"Error retrieving paginated clinics: {e}")
             raise
 
     def get_clinic(self, clinic_id: int):
