@@ -1,0 +1,33 @@
+version: '3.8'
+services:
+  db:
+    image: pgvector/pgvector:pg15
+    container_name: solum_health_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+      - ./db_init:/docker-entrypoint-initdb.d
+    ports:
+      - 5432:5432
+    env_file:
+      - .env
+    networks:
+      - app-solum-heath-net
+
+  pg_admin:
+    image: dpage/pgadmin4
+    container_name: pgadmin_solum_health
+    ports:
+      - 8085:80
+    env_file:
+      - .env
+    networks:
+      - app-solum-heath-net
+    depends_on:
+      - db
+
+networks:
+  app-solum-heath-net:
+
+volumes:
+  postgres_data:
+  
