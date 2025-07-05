@@ -1,19 +1,30 @@
 from app.data_acess.models import Clinic as ClinicModel, Call as CallModel, Evaluation as EvaluationModel
 from app.domain.models import Clinic as ClinicDomain, Call as CallDomain, Evaluation as EvaluationDomain
+from utils.logger import logger
 
 class ClinicMapper:
     @staticmethod
     def to_domain(clinic_model: ClinicModel) -> ClinicDomain:
         """Convert SQLModel to Domain model using Pydantic"""
-        return ClinicDomain.model_validate(clinic_model)
+        try:
+            return ClinicDomain.model_validate(clinic_model)
+        except Exception as e:
+            logger.error(f"Error mapping clinic to domain: {e}")
+            raise ValueError(f"Failed to map clinic to domain: {e}")
     
     @staticmethod
     def to_model(clinic_domain: ClinicDomain) -> ClinicModel:
         """Convert Domain model to SQLModel"""
-        return ClinicModel(
-            id=clinic_domain.id,
-            name=clinic_domain.name
-        )
+        try:
+            return ClinicModel(
+                id=clinic_domain.id,
+                name=clinic_domain.name
+            )
+        except Exception as e:
+            logger.error(f"Error mapping clinic to model: {e}")
+            raise ValueError(f"Failed to map clinic to model: {e}")
+
+    
 
 class CallMapper:
     @staticmethod
