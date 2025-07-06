@@ -1,48 +1,67 @@
-from typing import Optional, List
+from typing import Optional, List, Literal
 from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
-from sqlalchemy import JSON
+from sqlalchemy import JSON, TIMESTAMP, func, Column
+from enum import Enum
+
+class EvaluatorType(str, Enum):
+    HUMAN = "human"
+    LLM = "llm"
+    VAPI = "vapi"
+
+class TimestampMixin:
+    created: Optional[datetime] = Field(
+        default=None, 
+        sa_column=Column(TIMESTAMP, nullable=False, server_default=func.now())
+    )
 
 class Clinic(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(index=True, unique=True)
-    # calls: List["Call"] = Relationship(back_populates="clinic")
+    created: Optional[datetime] = Field(
+        default=None, 
+        sa_column=Column(TIMESTAMP, nullable=False, server_default=func.now())
+    )
+    calls: List["Call"] = Relationship(back_populates="clinic")
 
-# class Call(SQLModel, table=True):
-#     id: Optional[int] = Field(default=None, primary_key=True)
-#     call_id: str = Field(index=True, unique=True)
-#     assistant: str
-#     ended_reason: Optional[str] = None
-#     customer_phone: Optional[str] = None
-#     customer_name: Optional[str] = None
-#     insurance: Optional[str] = None
-#     dob: Optional[datetime] = None
-#     call_reason: Optional[str] = None
-#     call_start_time: Optional[datetime] = None
-#     call_ended_time: Optional[datetime] = None
-#     duration: Optional[float] = None
-#     recording_url: Optional[str] = None
-#     summary: Optional[str] = None
-#     date: Optional[str] = None
-#     call_metadata: Optional[dict] = Field(default=None, sa_column=JSON)
-#     created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
-
-#     clinic_id: int = Field(foreign_key="clinic.id")
-#     clinic: Optional[Clinic] = Relationship(back_populates="calls")
-#     evaluations: List["Evaluation"] = Relationship(back_populates="call")
+class Call(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    call_id: str = Field(index=True, unique=True)
+    assistant: str
+    call_start_time: Optional[datetime] = None
+    call_ended_time: Optional[datetime] = None
+    customer_phone: Optional[str] = None
+    customer_name: Optional[str] = None
+    duration: Optional[float] = None
+    summary: Optional[str] = None
+    recording_url: Optional[str] = None
+    ended_reason: Optional[str] = None
+    call_reason: Optional[str] = None
+    clinic_id: int = Field(foreign_key="clinic.id")
+    clinic: Optional[Clinic] = Relationship(back_populates="calls")
+    evaluations: List["Evaluation"] = Relationship(back_populates="call")
+    created: Optional[datetime] = Field(
+        default=None, 
+        sa_column=Column(TIMESTAMP, nullable=False, server_default=func.now())
+    )
 
 
-# class Evaluation(SQLModel, table=True):
-#     id: Optional[int] = Field(default=None, primary_key=True)
-#     call_id: int = Field(foreign_key="call.id")
-#     evaluator_type: str  # "human" or "llm"
-#     reviewer: Optional[str] = None
-#     score: Optional[float] = None
-#     check: Optional[str] = None
-#     feedback: Optional[str] = None
-#     status_feedback_engineer: Optional[str] = None
-#     comments_engineer: Optional[str] = None
-#     evaluation_metadata: Optional[dict] = Field(default=None, sa_column=JSON)
-#     created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+class Evaluation(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    call_id: int = Field(foreign_key="call.id")
+    evaluator_type: EvaluatorType
 
-#     call: Optional[Call] = Relationship(back_populates="evaluations")
+    reviewer: Optional[str] = None
+    evaluation: Optional[str] = None
+    check: Optional[str] = None
+    feedback: Optional[str] = None
+    score: Optional[float] = None
+
+    status_feedback_engineer: Optional[str] = None
+    comments_engineer: Optional[str] = None
+
+    call: Optional["Call"] = Relationship(back_populates="evaluations")
+    created: Optional[datetime] = Field(
+        default=None, 
+        sa_column=Column(TIMESTAMP, nullable=False, server_default=func.now())
+    )
