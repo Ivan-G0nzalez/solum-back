@@ -21,6 +21,23 @@ class CallService:
         except Exception as e:
             logger.error(f"Error retrieving calls: {e}")
             raise
+    
+    def get_calls_by_clinic_paginated(self, clinic_id: int, pagination: CustomPagination):
+        logger.info(f"Paginating calls for clinic {clinic_id}: page={pagination.page}, items_per_page={pagination.items_per_page}")
+
+        try:
+            total_count = self.__unit_of_work.calls.count_by_clinic(clinic_id)
+            call_models = self.__unit_of_work.calls.list_by_clinic_paginated(
+                clinic_id=clinic_id,
+                offset=pagination.offset, 
+                limit=pagination.items_per_page
+            )
+            calls = [CallRead.model_validate(call.model_dump()) for call in call_models]
+            paginated_response = pagination.paginate(calls, total_count)
+            return paginated_response
+        except Exception as e:
+            logger.error(f"Error paginating calls for clinic {clinic_id}: {e}")
+            raise
 
     def get_calls_paginated(self, pagination: CustomPagination):
         logger.info(f"Paginating calls: page={pagination.page}, items_per_page={pagination.items_per_page}")

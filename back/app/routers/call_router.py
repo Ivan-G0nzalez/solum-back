@@ -194,3 +194,30 @@ async def delete_call(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error"
         )
+
+
+@router.get("/clinic/{clinic_id}", response_model=PaginationResponse[CallRead], summary="Get calls by clinic (paginated)")
+async def get_calls_by_clinic(
+    clinic_id: int,
+    pagination = Depends(get_pagination_params),
+    service: CallService = Depends(get_call_service)
+):
+    """
+    Retrieve all calls for a specific clinic with pagination.
+    
+    Args:
+        clinic_id (int): The ID of the clinic to filter calls by
+        
+    Query Parameters:
+        page (int): Page number (default: 1)
+        items_per_page (int): Items per page (default: 10, max: 100)
+    
+    Returns:
+        PaginationResponse[Call]: Paginated list of calls for the clinic
+    """
+    try:
+        calls = service.get_calls_by_clinic_paginated(clinic_id, pagination)
+        return calls
+    except Exception as e:
+        logger.error(f"Error in get_calls_by_clinic endpoint: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
