@@ -1,5 +1,5 @@
 from app.data_acess.models import Clinic as ClinicModel, Call as CallModel, Evaluation as EvaluationModel
-from app.domain.models import Clinic as ClinicDomain, Call as CallDomain, Evaluation as EvaluationDomain
+from app.domain.clinics_models import Clinic as ClinicDomain, Call as CallDomain, Evaluation as EvaluationDomain
 from utils.logger import logger
 
 class ClinicMapper:

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 from app.services.clinic_services import ClinicService
-from app.domain.models import Clinic, ClinicCreate, ClinicUpdate
+from app.domain.clinics_models import Clinic, ClinicCreate, ClinicUpdate
 from app.utils.logger import logger
 from app.utils.pagination import get_pagination_params, PaginationResponse
 

@@ -1,6 +1,6 @@
 from app.repositories.unit_of_work import UnitOfWork
 from app.data_acess.models import Clinic as ClinicModel
-from app.domain.models import Clinic as ClinicDomain, ClinicCreate, ClinicUpdate
+from app.domain.clinics_models import Clinic as ClinicDomain, ClinicCreate, ClinicUpdate
 from app.utils.logger import logger
 from app.utils.pagination import CustomPagination
 
