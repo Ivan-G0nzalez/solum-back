@@ -3,9 +3,20 @@ from typing import Optional, List
 from datetime import datetime
 from .evaluation_models import EvaluationRead
 from .clinics_models import Clinic as ClinicDomain
+from enum import Enum
+
+class CallType(str, Enum):
+    inbound = "inbound"
+    outbound = "outbound"
+
+class AgentEnvironment(str, Enum):
+    production = "production"
+    development = "development"
 
 class CallBase(BaseModel):
     call_id: str = Field(..., min_length=3, max_length=100)
+    call_type: CallType = CallType.inbound
+    agent_environment: AgentEnvironment = AgentEnvironment.production
     assistant: str
     call_start_time: Optional[datetime] = None
     call_ended_time: Optional[datetime] = None
@@ -21,9 +32,13 @@ class CallBase(BaseModel):
     model_config = ConfigDict(from_attributes=True) 
 
 class CallCreate(CallBase):
+    call_type: CallType = CallType.inbound
+    agent_environment: AgentEnvironment = AgentEnvironment.production
     pass
 
 class CallUpdate(BaseModel):
+    call_type: Optional[CallType] = CallType.inbound
+    agent_environment: Optional[AgentEnvironment] = AgentEnvironment.production
     assistant: Optional[str] = None
     call_start_time: Optional[datetime] = None
     call_ended_time: Optional[datetime] = None

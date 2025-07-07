@@ -4,6 +4,15 @@ from datetime import datetime
 from sqlalchemy import JSON, TIMESTAMP, func, Column
 from enum import Enum
 
+
+class AgentEnvironment(str, Enum):
+    production = "production"
+    development = "development"
+
+class CallType(str, Enum):
+    inbound = "inbound"
+    outbound = "outbound"
+
 class EvaluatorType(str, Enum):
     HUMAN = "human"
     LLM = "llm"
@@ -27,6 +36,8 @@ class Clinic(SQLModel, table=True):
 class Call(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     call_id: str = Field(index=True, unique=True)
+    call_type: CallType
+    agent_environment: AgentEnvironment
     assistant: str
     call_start_time: Optional[datetime] = None
     call_ended_time: Optional[datetime] = None
