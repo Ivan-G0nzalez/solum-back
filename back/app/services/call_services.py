@@ -7,17 +7,18 @@ from typing import List
 
 
 class CallService:
-    def __init__(self, unit_of_work=UnitOfWork()) -> None:
-        self.__unit_of_work = unit_of_work
+    def __init__(self, unit_of_work_factory=UnitOfWork) -> None:
+        self._unit_of_work_factory = unit_of_work_factory
 
     def get_calls(self) -> List[CallRead]:
         logger.info("Processing request for calls")
 
         try:
-            call_models = self.__unit_of_work.calls.list()
-            calls = [CallRead.model_validate(call, from_attributes=True) for call in call_models]
-            logger.info(f"Successfully retrieved {len(calls)} calls")
-            return calls
+            with self._unit_of_work_factory() as uow:
+                call_models = uow.calls.list()
+                calls = [CallRead.model_validate(call, from_attributes=True) for call in call_models]
+                logger.info(f"Successfully retrieved {len(calls)} calls")
+                return calls
         except Exception as e:
             logger.error(f"Error retrieving calls: {e}")
             raise
@@ -26,15 +27,16 @@ class CallService:
         logger.info(f"Paginating calls for clinic {clinic_id}: page={pagination.page}, items_per_page={pagination.items_per_page}")
 
         try:
-            total_count = self.__unit_of_work.calls.count_by_clinic(clinic_id)
-            call_models = self.__unit_of_work.calls.list_by_clinic_paginated(
-                clinic_id=clinic_id,
-                offset=pagination.offset, 
-                limit=pagination.items_per_page
-            )
-            calls = [CallRead.model_validate(call, from_attributes=True) for call in call_models]
-            paginated_response = pagination.paginate(calls, total_count)
-            return paginated_response
+            with self._unit_of_work_factory() as uow:
+                total_count = uow.calls.count_by_clinic(clinic_id)
+                call_models = uow.calls.list_by_clinic_paginated(
+                    clinic_id=clinic_id,
+                    offset=pagination.offset, 
+                    limit=pagination.items_per_page
+                )
+                calls = [CallRead.model_validate(call, from_attributes=True) for call in call_models]
+                paginated_response = pagination.paginate(calls, total_count)
+                return paginated_response
         except Exception as e:
             logger.error(f"Error paginating calls for clinic {clinic_id}: {e}")
             raise
@@ -54,27 +56,28 @@ class CallService:
         logger.info(f"Getting calls for clinic {clinic_id} with filters: search={search}, type={call_type}, sort={sort_by} {sort_order}")
 
         try:
-            # Get total count with filters
-            total_count = self.__unit_of_work.calls.count_by_clinic_with_filters(
-                clinic_id=clinic_id,
-                search_term=search,
-                call_type=call_type
-            )
-            
-            # Get paginated data with filters
-            call_models = self.__unit_of_work.calls.search_by_clinic_with_filters(
-                clinic_id=clinic_id,
-                search_term=search,
-                call_type=call_type,
-                sort_by=sort_by,
-                sort_order=sort_order,
-                offset=pagination.offset,
-                limit=pagination.items_per_page
-            )
-            
-            calls = [CallRead.model_validate(call, from_attributes=True) for call in call_models]
-            paginated_response = pagination.paginate(calls, total_count)
-            return paginated_response
+            with self._unit_of_work_factory() as uow:
+                # Get total count with filters
+                total_count = uow.calls.count_by_clinic_with_filters(
+                    clinic_id=clinic_id,
+                    search_term=search,
+                    call_type=call_type
+                )
+                
+                # Get paginated data with filters
+                call_models = uow.calls.search_by_clinic_with_filters(
+                    clinic_id=clinic_id,
+                    search_term=search,
+                    call_type=call_type,
+                    sort_by=sort_by,
+                    sort_order=sort_order,
+                    offset=pagination.offset,
+                    limit=pagination.items_per_page
+                )
+                
+                calls = [CallRead.model_validate(call, from_attributes=True) for call in call_models]
+                paginated_response = pagination.paginate(calls, total_count)
+                return paginated_response
         except Exception as e:
             logger.error(f"Error getting calls for clinic {clinic_id} with filters: {e}")
             raise
@@ -83,14 +86,15 @@ class CallService:
         logger.info(f"Paginating calls: page={pagination.page}, items_per_page={pagination.items_per_page}")
 
         try:
-            total_count = self.__unit_of_work.calls.count()
-            call_models = self.__unit_of_work.calls.list_paginated(
-                offset=pagination.offset, 
-                limit=pagination.items_per_page
-            )
-            calls = [CallRead.model_validate(call, from_attributes=True) for call in call_models]
-            paginated_response = pagination.paginate(calls, total_count)
-            return paginated_response
+            with self._unit_of_work_factory() as uow:
+                total_count = uow.calls.count()
+                call_models = uow.calls.list_paginated(
+                    offset=pagination.offset, 
+                    limit=pagination.items_per_page
+                )
+                calls = [CallRead.model_validate(call, from_attributes=True) for call in call_models]
+                paginated_response = pagination.paginate(calls, total_count)
+                return paginated_response
         except Exception as e:
             logger.error(f"Error paginating calls: {e}")
             raise
@@ -99,12 +103,13 @@ class CallService:
         logger.info(f"Getting call with ID {call_id}")
 
         try:
-            call_model = self.__unit_of_work.calls.get(call_id)
-            if call_model is None:
-                logger.warning(f"Call with ID {call_id} not found")
-                return None
+            with self._unit_of_work_factory() as uow:
+                call_model = uow.calls.get(call_id)
+                if call_model is None:
+                    logger.warning(f"Call with ID {call_id} not found")
+                    return None
 
-            return CallRead.model_validate(call_model, from_attributes=True)
+                return CallRead.model_validate(call_model, from_attributes=True)
         except Exception as e:
             logger.error(f"Error getting call {call_id}: {e}")
             raise
@@ -113,13 +118,12 @@ class CallService:
         logger.info("Creating a new call")
 
         try:
-            call_create = CallCreate.model_validate(call_data)
-            created_call = self.__unit_of_work.calls.add(call_create)
-            self.__unit_of_work._UnitOfWork__session.commit()
-
-            return CallRead.model_validate(created_call)
+            with self._unit_of_work_factory() as uow:
+                call_create = CallCreate.model_validate(call_data)
+                created_call = uow.calls.add(call_create)
+                uow._UnitOfWork__session.commit()
+                return CallRead.model_validate(created_call)
         except Exception as e:
-            self.__unit_of_work._UnitOfWork__session.rollback()
             logger.error(f"Error creating call: {e}")
             raise
 
@@ -127,19 +131,19 @@ class CallService:
         logger.info(f"Updating call with ID {call_id}")
 
         try:
-            call_update = CallUpdate.model_validate(call_data)
-            update_data = call_update.model_dump(exclude_unset=True)
+            with self._unit_of_work_factory() as uow:
+                call_update = CallUpdate.model_validate(call_data)
+                update_data = call_update.model_dump(exclude_unset=True)
 
-            updated_call_model = self.__unit_of_work.calls.update(call_id, update_data)
-            if updated_call_model is None:
-                logger.warning(f"Call with ID {call_id} not found for update")
-                return None
+                updated_call_model = uow.calls.update(call_id, update_data)
+                if updated_call_model is None:
+                    logger.warning(f"Call with ID {call_id} not found for update")
+                    return None
 
-            self.__unit_of_work._UnitOfWork__session.commit()
-            updated_call = CallRead.model_validate(updated_call_model)
-            return updated_call
+                uow._UnitOfWork__session.commit()
+                updated_call = CallRead.model_validate(updated_call_model)
+                return updated_call
         except Exception as e:
-            self.__unit_of_work._UnitOfWork__session.rollback()
             logger.error(f"Error updating call {call_id}: {e}")
             raise
 
@@ -147,14 +151,14 @@ class CallService:
         logger.info(f"Deleting call with ID {call_id}")
 
         try:
-            success = self.__unit_of_work.calls.delete(call_id)
-            if success:
-                self.__unit_of_work._UnitOfWork__session.commit()
-                logger.info(f"Successfully deleted call with ID {call_id}")
-            else:
-                logger.warning(f"Call with ID {call_id} not found for deletion")
-            return success
+            with self._unit_of_work_factory() as uow:
+                success = uow.calls.delete(call_id)
+                if success:
+                    uow._UnitOfWork__session.commit()
+                    logger.info(f"Successfully deleted call with ID {call_id}")
+                else:
+                    logger.warning(f"Call with ID {call_id} not found for deletion")
+                return success
         except Exception as e:
-            self.__unit_of_work._UnitOfWork__session.rollback()
             logger.error(f"Error deleting call {call_id}: {e}")
             raise

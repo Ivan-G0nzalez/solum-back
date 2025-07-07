@@ -31,6 +31,12 @@ class UnitOfWork(AbstractUnitOfWork):
         self.__call_repo = None
         self.__evaluation_repo = None
         self.__user_repo = None
+    
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.__session.close()
 
     @property
     def clinics(self):
