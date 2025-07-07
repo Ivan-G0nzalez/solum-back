@@ -65,3 +65,18 @@ class Evaluation(SQLModel, table=True):
         default=None, 
         sa_column=Column(TIMESTAMP, nullable=False, server_default=func.now())
     )
+
+
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str = Field(index=True, unique=True, max_length=50)
+    email: str = Field(index=True, unique=True, max_length=100)
+    password: str = Field(max_length=255)
+    first_name: str = Field(max_length=50)
+    last_name: str = Field(max_length=50)
+    is_active: bool = Field(default=True)
+    last_login: Optional[datetime] = None
+    date_joined: Optional[datetime] = Field(
+        default=None, 
+        sa_column=Column(TIMESTAMP, nullable=False, server_default=func.now())
+    )

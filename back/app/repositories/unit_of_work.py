@@ -4,6 +4,7 @@ from app.repositories.sql_client import sql_client
 from app.repositories.clinic_repository import ClinicRepository
 from app.repositories.call_repository import CallRepository
 from app.repositories.evaluation_repository import EvaluationRepository
+from app.repositories.user_repository import UserRepository
 
 class AbstractUnitOfWork(abc.ABC):
 
@@ -18,6 +19,10 @@ class AbstractUnitOfWork(abc.ABC):
     @abc.abstractmethod
     def evaluations(self):
         pass
+    
+    @abc.abstractmethod
+    def users(self):
+        pass
 
 class UnitOfWork(AbstractUnitOfWork):
     def __init__(self):
@@ -25,6 +30,7 @@ class UnitOfWork(AbstractUnitOfWork):
         self.__clinic_repo = None
         self.__call_repo = None
         self.__evaluation_repo = None
+        self.__user_repo = None
 
     @property
     def clinics(self):
@@ -43,3 +49,9 @@ class UnitOfWork(AbstractUnitOfWork):
         if self.__evaluation_repo is None:
             self.__evaluation_repo = EvaluationRepository(self.__session)
         return self.__evaluation_repo
+    
+    @property
+    def users(self):
+        if self.__user_repo is None:
+            self.__user_repo = UserRepository(self.__session)
+        return self.__user_repo
