@@ -36,6 +36,37 @@ class UnitOfWork(AbstractUnitOfWork):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        try:
+            if exc_type is not None:
+                # If there was an exception, rollback the transaction
+                self.__session.rollback()
+            else:
+                # If no exception, commit the transaction
+                self.__session.commit()
+        except Exception as e:
+            # If commit/rollback fails, try to rollback
+            try:
+                self.__session.rollback()
+            except:
+                pass
+        finally:
+            # Always close the session
+            try:
+                self.__session.close()
+            except Exception as e:
+                # Log but don't raise - session close errors shouldn't break the app
+                pass
+
+    def commit(self):
+        """Manually commit the transaction"""
+        self.__session.commit()
+
+    def rollback(self):
+        """Manually rollback the transaction"""
+        self.__session.rollback()
+
+    def close(self):
+        """Close the session"""
         self.__session.close()
 
     @property

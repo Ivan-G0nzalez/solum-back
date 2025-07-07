@@ -34,9 +34,23 @@ class ConnectionStringBuilder:
 class SQLClient:
     def __init__(self, url=ConnectionStringBuilder.get_default_connection_string()):
         try:
-            engine = create_engine(url, echo=True)
+            engine = create_engine(
+                url, 
+                echo=True,
+                # Conservative pool configuration for Supabase
+                pool_size=3,  # Reduced pool size for Supabase limits
+                max_overflow=5,  # Reduced overflow for Supabase limits
+                pool_timeout=20,  # Shorter timeout
+                pool_recycle=1800,  # Recycle connections after 30 minutes
+                pool_pre_ping=True,  # Verify connections before using them
+                pool_reset_on_return='commit'  # Reset connections when returned to pool
+            )
             self.__session = sessionmaker(
-                autocommit=False, autoflush=False, bind=engine)
+                autocommit=False, 
+                autoflush=False, 
+                bind=engine,
+                expire_on_commit=False  # Don't expire objects after commit
+            )
         except Exception as e:
             logger.error(
                 f"Error trying to connect to the Database. error: {e}")

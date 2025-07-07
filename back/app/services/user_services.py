@@ -28,7 +28,8 @@ class UserService:
                 uow.users.update_last_login(user_model.id)
                 uow._UnitOfWork__session.commit()
                 logger.info(f"Authenticated user: {username_or_email}")
-                return user_model
+                # Convert to domain model before returning to avoid detached instance error
+                return UserDomain.model_validate(user_model)
         except Exception as e:
             logger.error(f"Error authenticating user: {e}")
             raise
