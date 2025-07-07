@@ -96,7 +96,8 @@ class CallService:
                 return None
 
             self.__unit_of_work._UnitOfWork__session.commit()
-            return CallRead.model_validate(updated_call_model.model_dump())
+            updated_call = CallRead.model_validate(updated_call_model)
+            return updated_call
         except Exception as e:
             self.__unit_of_work._UnitOfWork__session.rollback()
             logger.error(f"Error updating call {call_id}: {e}")

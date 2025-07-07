@@ -79,13 +79,13 @@ class CallRepository(AbtractRepository):
             logger.error(f"Failed to add call: {e}")
             raise
 
-    def update(self, call_id: int, call_update: CallUpdate) -> Optional[Call]:
+    def update(self, call_id: int, call_data: dict) -> Optional[Call]:
         logger.info(f"Updating call with ID {call_id}")
         try:
             call = self.get(call_id)
             if not call:
                 return None
-            for key, value in call_update.dict(exclude_unset=True).items():
+            for key, value in call_data.items():
                 setattr(call, key, value)
             self.__session.commit()
             self.__session.refresh(call)
