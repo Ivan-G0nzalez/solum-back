@@ -62,6 +62,19 @@ class ClinicRepository(AbtractRepository):
         logger.info(f'Found the clinic: {clinic.id} name: {clinic.name}')
         return clinic
 
+    def search_by_name(self, search_term: str):
+        """Search clinics by name using case-insensitive partial match"""
+        logger.info(f"Starting to search clinics by name: {search_term}")
+        try:
+            clinics = self.__session.query(Clinic).filter(
+                Clinic.name.ilike(f"%{search_term}%")
+            ).all()
+            logger.info(f"Found {len(clinics)} clinics matching '{search_term}'")
+            return clinics
+        except Exception as e:
+            logger.error(f"Failed to search clinics by name: {e}")
+            raise
+
     def add(self, clinic: Clinic):
         logger.info("Starting to add a clinic to database")
         try:

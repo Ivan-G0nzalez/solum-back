@@ -22,6 +22,20 @@ class ClinicService:
             logger.error(f"Error retrieving clinics: {e}")
             raise
 
+    def search_clinics(self, search_term: str):
+        """Search clinics by name using case-insensitive partial match"""
+        logger.info(f"Processing search request for clinics with term: {search_term}")
+
+        try:
+            clinic_models = self.__unit_of_work.clinics.search_by_name(search_term)
+            # Convert to domain models
+            clinics = [ClinicDomain.model_validate(clinic) for clinic in clinic_models]
+            logger.info(f"Successfully found {len(clinics)} clinics matching '{search_term}'")
+            return clinics
+        except Exception as e:
+            logger.error(f"Error searching clinics: {e}")
+            raise
+
     def get_clinics_paginated(self, pagination: CustomPagination):
         """Get paginated clinics"""
         logger.info(f"Processing request for paginated clinics: page={pagination.page}, items_per_page={pagination.items_per_page}")

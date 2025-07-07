@@ -43,16 +43,23 @@ async def get_clinics(
 
 @router.get("/all", response_model=List[Clinic], summary="Get all clinics (no pagination)")
 async def get_all_clinics(
+    search: str = None,
     service: ClinicService = Depends(get_clinic_service)
 ):
     """
     Retrieve all clinics from the database without pagination.
     
+    Query Parameters:
+        search (str, optional): Search term to filter clinics by name (case-insensitive partial match)
+    
     Returns:
-        List[Clinic]: List of all clinics
+        List[Clinic]: List of all clinics or filtered clinics if search term is provided
     """
     try:
-        clinics = service.get_clinics()
+        if search:
+            clinics = service.search_clinics(search)
+        else:
+            clinics = service.get_clinics()
         return clinics
     except Exception as e:
         logger.error(f"Error in get_all_clinics endpoint: {e}")
