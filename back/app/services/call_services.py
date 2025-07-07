@@ -15,7 +15,7 @@ class CallService:
 
         try:
             call_models = self.__unit_of_work.calls.list()
-            calls = [CallRead.model_validate(call.model_dump()) for call in call_models]
+            calls = [CallRead.model_validate(call, from_attributes=True) for call in call_models]
             logger.info(f"Successfully retrieved {len(calls)} calls")
             return calls
         except Exception as e:
@@ -48,7 +48,7 @@ class CallService:
                 offset=pagination.offset, 
                 limit=pagination.items_per_page
             )
-            calls = [CallRead.model_validate(call.model_dump()) for call in call_models]
+            calls = [CallRead.model_validate(call, from_attributes=True) for call in call_models]
             paginated_response = pagination.paginate(calls, total_count)
             return paginated_response
         except Exception as e:
@@ -64,7 +64,7 @@ class CallService:
                 logger.warning(f"Call with ID {call_id} not found")
                 return None
 
-            return CallRead.model_validate(call_model.model_dump())
+            return CallRead.model_validate(call_model, from_attributes=True)
         except Exception as e:
             logger.error(f"Error getting call {call_id}: {e}")
             raise

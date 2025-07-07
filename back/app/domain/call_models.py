@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field, ConfigDict
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
+from .evaluation_models import EvaluationRead
 
 class CallBase(BaseModel):
     call_id: str = Field(..., min_length=3, max_length=100)
@@ -39,5 +40,6 @@ class CallUpdate(BaseModel):
 class CallRead(CallBase):
     id: int
     created: datetime
+    evaluations: List[EvaluationRead] = []
 
     model_config = ConfigDict(from_attributes=True)

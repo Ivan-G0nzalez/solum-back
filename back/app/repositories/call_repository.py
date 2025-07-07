@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Session
-from app.data_acess.models import Call
+from sqlalchemy.orm import Session, joinedload
+from app.data_acess.models import Call, Evaluation
 from app.repositories.repository import AbtractRepository
 from app.utils.logger import logger
 from app.domain.call_models import CallCreate, CallUpdate
@@ -13,7 +13,31 @@ class CallRepository(AbtractRepository):
     def list(self) -> List[Call]:
         logger.info("Fetching all calls from the database")
         try:
-            calls = self.__session.query(Call).all()
+            total_evaluations = self.__session.query(Evaluation).count()
+            logger.info(f"Total evaluations in DB: {total_evaluations}")
+            
+            # Consulta las calls con evaluaciones
+            calls = self.__session.query(Call)\
+                .options(joinedload(Call.evaluations))\
+                .all()
+            
+            logger.info(f"Found {len(calls)} calls")
+            
+            # Debug cada call
+            for call in calls:
+                logger.info(f"Call {call.id} (call_id: {call.call_id})")
+                logger.info(f"  - Evaluations count: {len(call.evaluations)}")
+                
+                # Consulta directa para esta call
+                direct_evals = self.__session.query(Evaluation)\
+                    .filter(Evaluation.call_id == call.id)\
+                    .all()
+                logger.info(f"  - Direct query evaluations: {len(direct_evals)}")
+                
+                if call.evaluations:
+                    for eval in call.evaluations:
+                        logger.info(f"    * Evaluation {eval.id}: {eval.evaluator_type}")
+            
             return calls
         except Exception as e:
             logger.error(f"Failed to fetch all calls: {e}")
@@ -22,7 +46,11 @@ class CallRepository(AbtractRepository):
     def list_paginated(self, offset: int, limit: int) -> List[Call]:
         logger.info(f"Fetching paginated calls (offset={offset}, limit={limit})")
         try:
-            return self.__session.query(Call).offset(offset).limit(limit).all()
+            return self.__session.query(Call)\
+                .options(joinedload(Call.evaluations))\
+                .offset(offset)\
+                .limit(limit)\
+                .all()
         except Exception as e:
             logger.error(f"Failed to fetch paginated calls: {e}")
             raise
@@ -55,10 +83,15 @@ class CallRepository(AbtractRepository):
     
     def get(self, call_id: int) -> Optional[Call]:
         logger.info(f"Fetching call with ID {call_id}")
-        call = self.__session.query(Call).filter(Call.id == call_id).first()
-        if not call:
-            logger.warning(f"Call with ID {call_id} not found")
-        return call
+        try:
+            call = self.__session.query(Call)\
+                .options(joinedload(Call.evaluations))\
+                .filter(Call.id == call_id)\
+                .first()
+            return call
+        except Exception as e:
+            logger.error(f"Failed to fetch call {call_id}: {e}")
+            raise
     
     
     def add(self, call_create: CallCreate) -> Call:
