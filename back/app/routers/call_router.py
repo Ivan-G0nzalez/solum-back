@@ -200,10 +200,14 @@ async def delete_call(
 async def get_calls_by_clinic(
     clinic_id: int,
     pagination = Depends(get_pagination_params),
+    search: str = None,
+    call_type: str = None,
+    sort_by: str = "created",
+    sort_order: str = "desc",
     service: CallService = Depends(get_call_service)
 ):
     """
-    Retrieve all calls for a specific clinic with pagination.
+    Retrieve all calls for a specific clinic with pagination, search, filters, and sorting.
     
     Args:
         clinic_id (int): The ID of the clinic to filter calls by
@@ -211,13 +215,40 @@ async def get_calls_by_clinic(
     Query Parameters:
         page (int): Page number (default: 1)
         items_per_page (int): Items per page (default: 10, max: 100)
+        search (str, optional): Search term to filter by call_id or customer_phone (case-insensitive partial match)
+        call_type (str, optional): Filter by call type - "inbound" or "outbound"
+        sort_by (str, optional): Field to sort by - "created", "call_start_time", "duration", "call_id" (default: "created")
+        sort_order (str, optional): Sort order - "asc" or "desc" (default: "desc")
     
     Returns:
         PaginationResponse[Call]: Paginated list of calls for the clinic
     """
     try:
-        calls = service.get_calls_by_clinic_paginated(clinic_id, pagination)
+        # Validate call_type if provided
+        if call_type and call_type not in ["inbound", "outbound"]:
+            raise HTTPException(
+                status_code=400, 
+                detail="call_type must be either 'inbound' or 'outbound'"
+            )
+        
+        # Validate sort_order if provided
+        if sort_order and sort_order.lower() not in ["asc", "desc"]:
+            raise HTTPException(
+                status_code=400, 
+                detail="sort_order must be either 'asc' or 'desc'"
+            )
+        
+        calls = service.get_calls_by_clinic_with_filters(
+            clinic_id=clinic_id,
+            pagination=pagination,
+            search=search,
+            call_type=call_type,
+            sort_by=sort_by,
+            sort_order=sort_order.lower()
+        )
         return calls
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error in get_calls_by_clinic endpoint: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")

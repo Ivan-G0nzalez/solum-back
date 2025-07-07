@@ -173,3 +173,95 @@ class CallRepository(AbtractRepository):
         except Exception as e:
             logger.error(f"Failed to count calls for clinic {clinic_id}: {e}")
             raise
+
+    def search_by_clinic_with_filters(
+        self, 
+        clinic_id: int, 
+        search_term: str = None,
+        call_type: str = None,
+        sort_by: str = "created",
+        sort_order: str = "desc",
+        offset: int = 0,
+        limit: int = 10
+    ) -> List[Call]:
+        """
+        Search calls by clinic with filters, search, and sorting
+        
+        Args:
+            clinic_id: ID of the clinic
+            search_term: Search in call_id or customer_phone
+            call_type: Filter by call type (inbound/outbound)
+            sort_by: Field to sort by (created, call_start_time, duration, etc.)
+            sort_order: asc or desc
+            offset: Pagination offset
+            limit: Pagination limit
+        """
+        logger.info(f"Searching calls for clinic {clinic_id} with filters: search={search_term}, type={call_type}, sort={sort_by} {sort_order}")
+        
+        try:
+            query = self.__session.query(Call)\
+                .options(
+                    joinedload(Call.evaluations),
+                    joinedload(Call.clinic)
+                )\
+                .filter(Call.clinic_id == clinic_id)
+            
+            # Apply search filter
+            if search_term:
+                query = query.filter(
+                    (Call.call_id.ilike(f"%{search_term}%")) |
+                    (Call.customer_phone.ilike(f"%{search_term}%"))
+                )
+            
+            # Apply call type filter
+            if call_type:
+                query = query.filter(Call.call_type == call_type)
+            
+            # Apply sorting
+            sort_field = getattr(Call, sort_by, Call.created)
+            if sort_order.lower() == "desc":
+                query = query.order_by(sort_field.desc())
+            else:
+                query = query.order_by(sort_field.asc())
+            
+            # Apply pagination
+            query = query.offset(offset).limit(limit)
+            
+            calls = query.all()
+            logger.info(f"Found {len(calls)} calls matching criteria")
+            return calls
+        except Exception as e:
+            logger.error(f"Failed to search calls for clinic {clinic_id}: {e}")
+            raise
+
+    def count_by_clinic_with_filters(
+        self, 
+        clinic_id: int, 
+        search_term: str = None,
+        call_type: str = None
+    ) -> int:
+        """
+        Count calls by clinic with filters (for pagination)
+        """
+        logger.info(f"Counting calls for clinic {clinic_id} with filters: search={search_term}, type={call_type}")
+        
+        try:
+            query = self.__session.query(Call).filter(Call.clinic_id == clinic_id)
+            
+            # Apply search filter
+            if search_term:
+                query = query.filter(
+                    (Call.call_id.ilike(f"%{search_term}%")) |
+                    (Call.customer_phone.ilike(f"%{search_term}%"))
+                )
+            
+            # Apply call type filter
+            if call_type:
+                query = query.filter(Call.call_type == call_type)
+            
+            count = query.count()
+            logger.info(f"Found {count} calls matching criteria")
+            return count
+        except Exception as e:
+            logger.error(f"Failed to count calls for clinic {clinic_id}: {e}")
+            raise

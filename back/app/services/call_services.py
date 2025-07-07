@@ -39,6 +39,46 @@ class CallService:
             logger.error(f"Error paginating calls for clinic {clinic_id}: {e}")
             raise
 
+    def get_calls_by_clinic_with_filters(
+        self, 
+        clinic_id: int, 
+        pagination: CustomPagination,
+        search: str = None,
+        call_type: str = None,
+        sort_by: str = "created",
+        sort_order: str = "desc"
+    ):
+        """
+        Get calls by clinic with search, filters, and sorting
+        """
+        logger.info(f"Getting calls for clinic {clinic_id} with filters: search={search}, type={call_type}, sort={sort_by} {sort_order}")
+
+        try:
+            # Get total count with filters
+            total_count = self.__unit_of_work.calls.count_by_clinic_with_filters(
+                clinic_id=clinic_id,
+                search_term=search,
+                call_type=call_type
+            )
+            
+            # Get paginated data with filters
+            call_models = self.__unit_of_work.calls.search_by_clinic_with_filters(
+                clinic_id=clinic_id,
+                search_term=search,
+                call_type=call_type,
+                sort_by=sort_by,
+                sort_order=sort_order,
+                offset=pagination.offset,
+                limit=pagination.items_per_page
+            )
+            
+            calls = [CallRead.model_validate(call, from_attributes=True) for call in call_models]
+            paginated_response = pagination.paginate(calls, total_count)
+            return paginated_response
+        except Exception as e:
+            logger.error(f"Error getting calls for clinic {clinic_id} with filters: {e}")
+            raise
+
     def get_calls_paginated(self, pagination: CustomPagination):
         logger.info(f"Paginating calls: page={pagination.page}, items_per_page={pagination.items_per_page}")
 
