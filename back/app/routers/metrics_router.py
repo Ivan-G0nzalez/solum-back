@@ -149,4 +149,3 @@ def get_dashboard_metrics(
     except Exception as e:
         logger.error(f"Error getting dashboard metrics: {e}")
         raise HTTPException(status_code=500, detail=f"Error obteniendo métricas: {e}")
-
