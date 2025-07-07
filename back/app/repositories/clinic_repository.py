@@ -51,6 +51,17 @@ class ClinicRepository(AbtractRepository):
         logger.info(f'Found the clinic: {clinic.id} name: {clinic.name}')
         return clinic
 
+    def get_by_name(self, name: str):
+        logger.info(f"Starting to get clinic by name: {name}")
+        clinic = self.__session.query(Clinic).filter(Clinic.name == name).first()
+
+        if clinic is None:
+            logger.info(f'Clinic with name "{name}" not found')
+            return None
+        
+        logger.info(f'Found the clinic: {clinic.id} name: {clinic.name}')
+        return clinic
+
     def add(self, clinic: Clinic):
         logger.info("Starting to add a clinic to database")
         try:
@@ -61,6 +72,19 @@ class ClinicRepository(AbtractRepository):
             return clinic
         except Exception as e:
             logger.error(f"Failed to add clinic: {e}")
+            raise
+
+    def create(self, clinic_data: dict):
+        logger.info(f"Starting to create clinic with data: {clinic_data}")
+        try:
+            clinic = Clinic(**clinic_data)
+            self.__session.add(clinic)
+            self.__session.flush()  # Flush to get the ID
+            self.__session.refresh(clinic)
+            logger.info(f"Successfully created clinic: {clinic.name}")
+            return clinic
+        except Exception as e:
+            logger.error(f"Failed to create clinic: {e}")
             raise
 
     def update(self, clinic_id: int, clinic_data: dict):

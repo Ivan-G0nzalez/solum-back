@@ -57,6 +57,19 @@ class EvaluationRepository(AbtractRepository):
             logger.error(f"Error creating evaluation: {e}")
             raise
 
+    def create(self, evaluation_data: dict) -> Evaluation:
+        logger.info("Creating a new evaluation from dictionary data")
+        try:
+            evaluation = Evaluation(**evaluation_data)
+            self.__session.add(evaluation)
+            self.__session.flush()  # Flush to get the ID
+            self.__session.refresh(evaluation)
+            logger.info(f"Evaluation created successfully with ID {evaluation.id}")
+            return evaluation
+        except Exception as e:
+            logger.error(f"Error creating evaluation: {e}")
+            raise
+
     def update(self, evaluation_id: int, data: dict):  # Cambiar a dict
         logger.info(f"Updating evaluation with ID {evaluation_id}")
         try:

@@ -77,6 +77,19 @@ class CallRepository(AbtractRepository):
         except Exception as e:
             logger.error(f"Failed to fetch call {call_id}: {e}")
             raise
+
+    def get_by_call_id(self, call_id: str) -> Optional[Call]:
+        logger.info(f"Fetching call with call_id {call_id}")
+        try:
+            call = self.__session.query(Call)\
+                .options(joinedload(Call.evaluations),
+                    joinedload(Call.clinic))\
+                .filter(Call.call_id == call_id)\
+                .first()
+            return call
+        except Exception as e:
+            logger.error(f"Failed to fetch call with call_id {call_id}: {e}")
+            raise
     
     
     def add(self, call_create: CallCreate) -> Call:
@@ -95,6 +108,20 @@ class CallRepository(AbtractRepository):
         except Exception as e:
             self.__session.rollback()
             logger.error(f"Failed to add call: {e}")
+            raise
+
+    def create(self, call_data: dict) -> Call:
+        logger.info("Creating a new call from dictionary data")
+        try:
+            call = Call(**call_data)
+            self.__session.add(call)
+            self.__session.flush()  # Flush to get the ID
+            self.__session.refresh(call)
+            
+            logger.info(f"Call created successfully with ID {call.id}")
+            return call
+        except Exception as e:
+            logger.error(f"Failed to create call: {e}")
             raise
 
     def update(self, call_id: int, call_data: dict) -> Optional[Call]:
