@@ -1,6 +1,6 @@
 FROM python:3.10-slim
 
-# Install system dependencies
+# Instala dependencias del sistema necesarias
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
     curl \
     gcc \
@@ -12,17 +12,21 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Create app directory
+# Establece el directorio de trabajo
 WORKDIR /app
 
-# Copy requirements first for better caching
+# Copia primero las dependencias para aprovechar cache
 COPY requirements.txt .
 
-# Install Python dependencies
-RUN pip3 install --upgrade pip
-RUN pip3 install -r requirements.txt
+# Instala dependencias de Python
+RUN pip install --upgrade pip
+RUN pip install -r requirements.txt
 
-# Copy application code
+# Copia el resto de la aplicación
 COPY . .
 
+# Expone el puerto en el que correrá FastAPI
 EXPOSE 8000
+
+# Comando para ejecutar la app
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
