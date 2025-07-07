@@ -32,7 +32,7 @@ class CallService:
                 offset=pagination.offset, 
                 limit=pagination.items_per_page
             )
-            calls = [CallRead.model_validate(call.model_dump()) for call in call_models]
+            calls = [CallRead.model_validate(call, from_attributes=True) for call in call_models]
             paginated_response = pagination.paginate(calls, total_count)
             return paginated_response
         except Exception as e:

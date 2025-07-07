@@ -42,7 +42,12 @@ class CallRepository(AbtractRepository):
     def list_by_clinic(self, clinic_id: int) -> List[Call]:
         logger.info(f"Fetching all calls for clinic ID {clinic_id}")
         try:
-            calls = self.__session.query(Call).filter(Call.clinic_id == clinic_id).all()
+            calls = self.__session.query(Call)\
+                .options(
+                    joinedload(Call.evaluations),
+                    joinedload(Call.clinic)
+                )\
+                .filter(Call.clinic_id == clinic_id).all()
             return calls
         except Exception as e:
             logger.error(f"Failed to fetch calls for clinic {clinic_id}: {e}")
@@ -51,7 +56,12 @@ class CallRepository(AbtractRepository):
     def list_by_clinic_paginated(self, clinic_id: int, offset: int, limit: int) -> List[Call]:
         logger.info(f"Fetching paginated calls for clinic ID {clinic_id} (offset={offset}, limit={limit})")
         try:
-            return self.__session.query(Call).filter(Call.clinic_id == clinic_id).offset(offset).limit(limit).all()
+            return self.__session.query(Call)\
+                .options(
+                    joinedload(Call.evaluations),
+                    joinedload(Call.clinic)
+                )\
+                .filter(Call.clinic_id == clinic_id).offset(offset).limit(limit).all()
         except Exception as e:
             logger.error(f"Failed to fetch paginated calls for clinic {clinic_id}: {e}")
             raise
