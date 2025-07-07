@@ -63,11 +63,15 @@ class EvaluationService:
         try:
             update_data = evaluation_data.model_dump(exclude_unset=True)
             updated_model = self.__unit_of_work.evaluations.update(evaluation_id, update_data)
+            
             if updated_model is None:
                 logger.warning(f"Evaluation with ID {evaluation_id} not found for update")
                 return None
+            
             self.__unit_of_work._UnitOfWork__session.commit()
-            return EvaluationRead.model_validate(updated_model.model_dump())
+            
+            return EvaluationRead.model_validate(updated_model)  # En lugar de updated_model.model_dump()
+            
         except Exception as e:
             self.__unit_of_work._UnitOfWork__session.rollback()
             logger.error(f"Error updating evaluation {evaluation_id}: {e}")

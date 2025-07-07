@@ -57,15 +57,18 @@ class EvaluationRepository(AbtractRepository):
             logger.error(f"Error creating evaluation: {e}")
             raise
 
-    def update(self, evaluation_id: int, data: EvaluationUpdate):
+    def update(self, evaluation_id: int, data: dict):  # Cambiar a dict
         logger.info(f"Updating evaluation with ID {evaluation_id}")
         try:
             evaluation = self.get(evaluation_id)
             if not evaluation:
                 logger.warning(f"Evaluation with ID {evaluation_id} not found")
                 return None
+            
+            # data ya es un dict, úsalo directamente
             for key, value in data.items():
                 setattr(evaluation, key, value)
+            
             self.__session.commit()
             self.__session.refresh(evaluation)
             logger.info(f"Evaluation with ID {evaluation_id} updated successfully")

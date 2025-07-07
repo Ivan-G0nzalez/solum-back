@@ -1,10 +1,16 @@
 from typing import Optional, Literal
 from pydantic import BaseModel, ConfigDict
 from datetime import datetime
+from enum import Enum
+
+class EvaluatorType(str, Enum):
+    human = "human"
+    llm = "llm" 
+    vapi = "vapi"
 
 class EvaluationBase(BaseModel):
     call_id: int
-    evaluator_type: Literal["human", "llm", "vapi"]
+    evaluator_type: EvaluatorType
     reviewer: Optional[str] = None
     evaluation: Optional[str] = None
     check: Optional[str] = None
