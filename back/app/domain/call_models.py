@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from .evaluation_models import EvaluationRead
+from .clinics_models import Clinic as ClinicDomain
 
 class CallBase(BaseModel):
     call_id: str = Field(..., min_length=3, max_length=100)
@@ -41,5 +42,6 @@ class CallRead(CallBase):
     id: int
     created: datetime
     evaluations: List[EvaluationRead] = []
+    clinic: Optional[ClinicDomain] = None
 
     model_config = ConfigDict(from_attributes=True)

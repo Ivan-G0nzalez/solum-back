@@ -13,31 +13,12 @@ class CallRepository(AbtractRepository):
     def list(self) -> List[Call]:
         logger.info("Fetching all calls from the database")
         try:
-            total_evaluations = self.__session.query(Evaluation).count()
-            logger.info(f"Total evaluations in DB: {total_evaluations}")
-            
-            # Consulta las calls con evaluaciones
             calls = self.__session.query(Call)\
-                .options(joinedload(Call.evaluations))\
+                .options(
+                    joinedload(Call.evaluations),
+                    joinedload(Call.clinic)  # Cargar también la clínica
+                )\
                 .all()
-            
-            logger.info(f"Found {len(calls)} calls")
-            
-            # Debug cada call
-            for call in calls:
-                logger.info(f"Call {call.id} (call_id: {call.call_id})")
-                logger.info(f"  - Evaluations count: {len(call.evaluations)}")
-                
-                # Consulta directa para esta call
-                direct_evals = self.__session.query(Evaluation)\
-                    .filter(Evaluation.call_id == call.id)\
-                    .all()
-                logger.info(f"  - Direct query evaluations: {len(direct_evals)}")
-                
-                if call.evaluations:
-                    for eval in call.evaluations:
-                        logger.info(f"    * Evaluation {eval.id}: {eval.evaluator_type}")
-            
             return calls
         except Exception as e:
             logger.error(f"Failed to fetch all calls: {e}")
@@ -47,7 +28,10 @@ class CallRepository(AbtractRepository):
         logger.info(f"Fetching paginated calls (offset={offset}, limit={limit})")
         try:
             return self.__session.query(Call)\
-                .options(joinedload(Call.evaluations))\
+                .options(
+                    joinedload(Call.evaluations),
+                    joinedload(Call.clinic)
+                )\
                 .offset(offset)\
                 .limit(limit)\
                 .all()
@@ -85,7 +69,8 @@ class CallRepository(AbtractRepository):
         logger.info(f"Fetching call with ID {call_id}")
         try:
             call = self.__session.query(Call)\
-                .options(joinedload(Call.evaluations))\
+                .options(joinedload(Call.evaluations),
+                    joinedload(Call.clinic))\
                 .filter(Call.id == call_id)\
                 .first()
             return call
