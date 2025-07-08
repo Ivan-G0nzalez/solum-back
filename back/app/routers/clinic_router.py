@@ -60,7 +60,7 @@ async def get_all_clinics(
             clinics = service.search_clinics(search)
         else:
             clinics = service.get_clinics()
-            return clinics
+        return clinics
     except Exception as e:
         logger.error(f"Error in get_all_clinics endpoint: {e}")
         raise HTTPException(
